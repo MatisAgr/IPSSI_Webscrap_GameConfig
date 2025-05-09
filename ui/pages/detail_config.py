@@ -149,7 +149,7 @@ else:
                 st.markdown(f"<div class='category-badge'>{category}</div>", unsafe_allow_html=True)
                 
                 # Image du composant
-                st.image(image_url, caption=None, use_column_width='auto') # Ajustement de l'image
+                st.image(image_url, caption=None, use_container_width='auto') # Ajustement de l'image
                 
                 # Nom du composant
                 st.markdown(f"**{name}**")
@@ -210,7 +210,7 @@ else:
                                 image_url = placeholder_img
                             
                             # Image du composant
-                            st.image(image_url, caption=None, use_column_width='auto') # Ajustement de l'image
+                            st.image(image_url, caption=None, use_container_width='auto') # Ajustement de l'image
                             
                             # Nom du composant
                             st.markdown(f"**{name}**")
