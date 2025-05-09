@@ -142,11 +142,13 @@ class PCConfiguration:
         return "\n".join(summary)
 
 class PCPartPickerScraper:
-    def __init__(self):
+    def __init__(self, headless=False):
         # Configuration du navigateur Chrome
         chrome_options = Options()
-        # Décommentez la ligne suivante pour exécuter en mode headless (sans interface)
-        # chrome_options.add_argument("--headless")
+        
+        # Appliquer le mode headless en fonction du paramètre
+        if headless:
+            chrome_options.add_argument("--headless")
         
         # Ajouter l'option pour maximiser la fenêtre
         chrome_options.add_argument("--start-maximized")

@@ -55,8 +55,8 @@ with st.form(key="config_form"):
         )
     
     with col2:
-        include_alternatives = st.checkbox("Inclure les composants alternatifs", value=True)
-        headless_mode = st.checkbox("Mode sans interface", value=False)
+        include_alternatives = st.checkbox("Inclure les composants alternatifs", value=False)
+        headless_mode = st.checkbox("Mode sans interface", value=True)
     
     submit_config = st.form_submit_button("Générer ma configuration PC")
 
@@ -120,7 +120,7 @@ with st.form(key="config_form"):
                 # Ce spinner est séparé du premier (pas imbriqué)
                 with st.spinner("Création de la configuration PC en cours..."):
                     try:
-                        pp_scraper = PCPartPickerScraper()
+                        pp_scraper = PCPartPickerScraper(headless=headless_mode)
                         use_recommended = config_type == "Recommandée"
                     
                         if use_recommended:
