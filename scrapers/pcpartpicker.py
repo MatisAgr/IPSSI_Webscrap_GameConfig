@@ -123,8 +123,10 @@ class PCPartPickerScraper:
                     try:
                         price_element = element.find_element(By.CSS_SELECTOR, ".search_results--price a")
                         price = price_element.text.strip()
+                        price = self._normalize_price(price)  # Normaliser le format du prix
                     except:
-                        price = "Prix non disponible"
+                        price = "N/A"
+                        debug_print(f"Erreur lors de l'extraction du prix: {e}", level="warning")
                     
                     results.append({
                         "name": name,
@@ -143,20 +145,19 @@ class PCPartPickerScraper:
 
     def get_component_details(self, component_url):
         """
-        Récupère les détails complets d'un composant à partir de son URL
+        Récupère les informations de prix et d'achat d'un composant à partir de son URL
         
         Args:
             component_url (str): L'URL du composant
             
         Returns:
-            dict: Détails du composant (spécifications, prix, etc.)
+            dict: Détails du composant (prix, marchands, etc.)
         """
-        debug_print(f"Récupération des détails depuis: {component_url}", level="fetch")
+        debug_print(f"Récupération des prix depuis: {component_url}", level="fetch")
         self.driver.get(component_url)
         time.sleep(2)
         
         details = {
-            "specs": {},
             "price": None,
             "best_deal": None,
             "merchant_options": [],
@@ -164,19 +165,6 @@ class PCPartPickerScraper:
         }
         
         try:
-            # Extraire les spécifications
-            specs_elements = self.driver.find_elements(By.CSS_SELECTOR, ".specs .specs__row")
-            debug_print(f"Nombre de spécifications trouvées: {len(specs_elements)}", level="info")
-            
-            for spec in specs_elements:
-                try:
-                    key = spec.find_element(By.CSS_SELECTOR, ".specs__name").text
-                    value = spec.find_element(By.CSS_SELECTOR, ".specs__value").text
-                    details["specs"][key] = value
-                    debug_print(f"Spec: {key} = {value}", level="debug")
-                except:
-                    pass
-            
             # Extraire les informations de prix des marchands
             try:
                 # Récupérer tous les marchands du tableau de prix
@@ -189,14 +177,13 @@ class PCPartPickerScraper:
                         merchant_name = row.find_element(By.CSS_SELECTOR, ".td__logo img").get_attribute("alt")
                         price_element = row.find_element(By.CSS_SELECTOR, ".td__finalPrice a")
                         price = price_element.text.strip()
-                        buy_link = price_element.get_attribute("href")
-                        availability = "En stock" if "inStock" in row.find_element(By.CSS_SELECTOR, ".td__availability").get_attribute("class") else "Rupture de stock"
-                        
+                        price = self._normalize_price(price)  # Normaliser le format du prix
+                        buy_link = price_element.get_attribute("href")  
+                                              
                         merchant_info = {
                             "merchant": merchant_name,
                             "price": price,
                             "link": buy_link,
-                            "availability": availability
                         }
                         
                         details["merchant_options"].append(merchant_info)
@@ -205,7 +192,6 @@ class PCPartPickerScraper:
                         if i == 0:
                             details["best_deal"] = merchant_info
                             details["price"] = price
-                            details["availability"] = availability
                             debug_print(f"Meilleure offre trouvée: {price} chez {merchant_name}", level="success")
                         
                     except Exception as e:
@@ -216,24 +202,51 @@ class PCPartPickerScraper:
                 # Fallback: essayer d'extraire seulement le prix principal
                 try:
                     price_element = self.driver.find_element(By.CSS_SELECTOR, ".price__price")
-                    details["price"] = price_element.text
+                    details["price"] = self._normalize_price(price_element.text)
                     debug_print(f"Prix principal trouvé: {details['price']}", level="success")
                 except:
-                    details["price"] = "Prix non disponible"
+                    details["price"] = "N/A"
                     debug_print("Prix non disponible", level="warning")
                     
         except Exception as e:
             debug_print(f"Erreur lors de l'extraction des détails du composant: {e}", level="error")
         
-        return details
+        return details 
         
+    def _normalize_price(self, price_text):
+        """
+        Normalise le format du prix de '€114.90+' vers '114,90€'
+        
+        Args:
+            price_text (str): Prix au format original
+            
+        Returns:
+            str: Prix au format normalisé ou 'N/A' si non disponible
+        """
+        if not price_text:
+            return "N/A"
+                
+        # Supprimer le symbole € au début s'il existe
+        if price_text.startswith('€'):
+            price_text = price_text[1:]
+                
+        # Supprimer le signe + à la fin s'il existe
+        if price_text.endswith('+'):
+            price_text = price_text[:-1]
+                
+        # Remplacer le point par une virgule
+        price_text = price_text.replace('.', ',')
+            
+        # Ajouter le symbole € à la fin
+        return f"{price_text}€"
+
     def close(self):
         """Ferme le navigateur"""
         if self.driver:
             debug_print("Fermeture du navigateur...", level="info")
             self.driver.quit()
             debug_print("Navigateur fermé", level="success")
-            
+                
 # Exemple d'utilisation
 if __name__ == "__main__":
     # Ce code ne s'exécute que si le fichier est lancé directement
@@ -241,8 +254,8 @@ if __name__ == "__main__":
     scraper = PCPartPickerScraper()
     
     try:
-        # Exemple de recherche: un processeur Intel Core i5
-        query = "intel core i5"
+        # TESTER LA RECHERCHE
+        query = "NVIDIA 5090"
         debug_print(f"Recherche de: {query}", level="info")
         results = scraper.search_component(query)
         
@@ -259,10 +272,7 @@ if __name__ == "__main__":
             debug_print("Récupération des détails du premier résultat...", level="fetch")
             details = scraper.get_component_details(results[0]['link'])
             debug_print(f"  Prix: {details['price']}", level="info")
-            debug_print("  Spécifications:", level="info")
-            for key, value in details['specs'].items():
-                debug_print(f"    {key}: {value}", level="debug")
-    
+            debug_print("  Spécifications:", level="info")     
     except Exception as e:
         debug_print(f"Erreur lors du test: {e}", level="error")
     
