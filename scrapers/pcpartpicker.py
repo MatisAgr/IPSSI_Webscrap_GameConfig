@@ -255,7 +255,8 @@ if __name__ == "__main__":
     
     try:
         # TESTER LA RECHERCHE
-        query = "NVIDIA 5090"
+        
+        query = input("Entrez le terme de recherche (ex: 'intel i5', 'nvidia rtx 3070'): ")
         debug_print(f"Recherche de: {query}", level="info")
         results = scraper.search_component(query)
         
