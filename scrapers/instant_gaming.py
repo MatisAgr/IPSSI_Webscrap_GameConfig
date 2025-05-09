@@ -14,7 +14,7 @@ import uuid
 
 # Récupère le nom du jeu vidéo (utilise une valeur par défaut pour le moment)
 def get_game_name():
-    game_name = "GTA 5" 
+    game_name = "expedition 33" 
     print("\n" + "="*50)
     print("RECHERCHE DE JEU VIDÉO")
     print("="*50)
@@ -181,6 +181,19 @@ class InstantGaming:
             
             special_fields = ["OS", "Processor", "Memory", "Graphics", "Storage", "Sound Card"]
             
+            # Fonction pour vérifier si une valeur contient des alternatives
+            def has_alternatives(value):
+                return "|" in value or "/" in value
+            
+            # Fonction pour extraire les alternatives
+            def extract_alternatives(value):
+                # Si les deux séparateurs sont présents, privilégier le |
+                if "|" in value:
+                    return [opt.strip() for opt in value.split("|")]
+                elif "/" in value:
+                    return [opt.strip() for opt in value.split("/")]
+                return [value]
+            
             minimal_section = specs_container.find_element(By.CSS_SELECTOR, ".minimal")
             minimal_items = minimal_section.find_elements(By.CSS_SELECTOR, "ul.specs li")
             
@@ -192,11 +205,12 @@ class InstantGaming:
                     key = key.strip()
                     value = value.strip()
                     
-                    if key in special_fields and "|" in value:
-                        options = [opt.strip() for opt in value.split("|")]
+                    if key in special_fields and has_alternatives(value):
+                        options = extract_alternatives(value)
                         minimal_specs[key] = {
                             "1": options[0],
-                            "2": options[1] if len(options) > 1 else ""
+                            "2": options[1] if len(options) > 1 else "",
+                            "3": options[2] if len(options) > 2 else ""
                         }
                     else:
                         minimal_specs[key] = value
@@ -212,8 +226,8 @@ class InstantGaming:
                     key = key.strip()
                     value = value.strip()
                     
-                    if key in special_fields and "|" in value:
-                        options = [opt.strip() for opt in value.split("|")]
+                    if key in special_fields and has_alternatives(value):
+                        options = extract_alternatives(value)
                         recommended_specs[key] = {
                             "option1": options[0],
                             "option2": options[1] if len(options) > 1 else ""
