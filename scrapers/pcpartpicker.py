@@ -5,15 +5,121 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
-from bs4 import BeautifulSoup
 import time
-import re
 import sys
 import os
+import json
 
-# Ajouter le chemin du répertoire parent au path pour permettre l'import
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.debug_color import debug_print
+
+GLOBAL_WAIT = 1
+
+class PCConfiguration:
+    """Classe pour gérer une configuration PC avec ses composants et prix"""
+    
+    def __init__(self, name="Ma configuration"):
+        self.name = name
+        self.components = {}  # Dictionnaire avec catégorie comme clé et composant comme valeur
+        self.total_price = 0.0
+    
+    def add_component(self, category, component_info):
+        """
+        Ajoute un composant à la configuration
+        
+        Args:
+            category (str): Catégorie du composant (CPU, GPU, etc.)
+            component_info (dict): Informations sur le composant
+        """
+        self.components[category] = component_info
+        self._update_total_price()
+        debug_print(f"Composant ajouté: {category} - {component_info['name']}", level="success")
+    
+    def remove_component(self, category):
+        """
+        Retire un composant de la configuration
+        
+        Args:
+            category (str): Catégorie du composant à retirer
+        """
+        if category in self.components:
+            removed = self.components[category]['name']
+            del self.components[category]
+            self._update_total_price()
+            debug_print(f"Composant retiré: {category} - {removed}", level="info")
+    
+    def _update_total_price(self):
+        """Met à jour le prix total de la configuration"""
+        self.total_price = 0.0
+        for category, component in self.components.items():
+            if component['price'] != "N/A":
+                # Extraire le prix numérique (enlever le symbole €)
+                price_str = component['price'].replace('€', '').replace(',', '.')
+                try:
+                    self.total_price += float(price_str)
+                except ValueError:
+                    debug_print(f"Prix invalide pour {component['name']}: {component['price']}", level="warning")
+    
+    def get_total_price(self):
+        """
+        Obtient le prix total formaté
+        
+        Returns:
+            str: Prix total formaté (ex: '1250,90€')
+        """
+        return f"{self.total_price:.2f}€".replace('.', ',')
+    
+    def save_to_json(self, filepath):
+        """
+        Sauvegarde la configuration dans un fichier JSON
+        
+        Args:
+            filepath (str): Chemin du fichier de sauvegarde
+        """
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump({
+                'name': self.name,
+                'components': self.components,
+                'total_price': self.get_total_price()
+            }, f, ensure_ascii=False, indent=2)
+        debug_print(f"Configuration sauvegardée dans {filepath}", level="success")
+    
+    @classmethod
+    def load_from_json(cls, filepath):
+        """
+        Charge une configuration depuis un fichier JSON
+        
+        Args:
+            filepath (str): Chemin du fichier à charger
+            
+        Returns:
+            PCConfiguration: L'objet configuration chargé
+        """
+        with open(filepath, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            config = cls(name=data['name'])
+            for category, component in data['components'].items():
+                config.add_component(category, component)
+            debug_print(f"Configuration chargée depuis {filepath}", level="success")
+            return config
+    
+    def get_summary(self):
+        """
+        Obtient un résumé texte de la configuration
+        
+        Returns:
+            str: Résumé formaté
+        """
+        summary = [f"Configuration: {self.name}"]
+        summary.append("=" * 40)
+        
+        for category, component in self.components.items():
+            summary.append(f"{category}: {component['name']} - {component['price']}")
+        
+        summary.append("=" * 40)
+        summary.append(f"Prix total: {self.get_total_price()}")
+        
+        return "\n".join(summary)
 
 class PCPartPickerScraper:
     def __init__(self):
@@ -28,6 +134,50 @@ class PCPartPickerScraper:
         self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
         self.base_url = "https://fr.pcpartpicker.com"
         debug_print("Navigateur initialisé", level="success")
+    
+    def create_configuration(self, name, components_to_search):
+        """
+        Crée une configuration PC à partir d'une liste de composants à rechercher
+        
+        Args:
+            name (str): Nom de la configuration
+            components_to_search (dict): Dictionnaire avec comme clés les catégories
+                                        et comme valeurs les termes de recherche
+        
+        Returns:
+            PCConfiguration: L'objet configuration créé
+        """        
+        config = PCConfiguration(name=name)
+        
+        for category, search_term in components_to_search.items():
+            debug_print(f"Recherche de {category}: {search_term}", level="info")
+            results = self.search_component(search_term)
+            
+            if results:
+                # Prendre le premier résultat
+                component = results[0]
+                
+                # Obtenir plus de détails (prix et marchands)
+                component_details = self.get_component_details(component['link'])
+                
+                # Utiliser les détails du meilleur prix
+                if component_details['best_deal']:
+                    component['price'] = component_details['best_deal']['price']
+                    component['merchant'] = component_details['best_deal']['merchant']
+                    component['buy_link'] = component_details['best_deal']['link']
+                
+                if component_details['image_url']:
+                    component['image_url'] = component_details['image_url']    
+
+                # Ajouter à la configuration
+                config.add_component(category, component)
+            else:
+                debug_print(f"Aucun résultat pour {category}: {search_term}", level="warning")
+        
+        debug_print(f"Configuration créée: {name}", level="success")
+        debug_print(f"Prix total: {config.get_total_price()}", level="success")
+        
+        return config
     
     def search_component(self, query):
         """
@@ -49,14 +199,14 @@ class PCPartPickerScraper:
             
             # Cliquer d'abord sur l'icône de recherche pour ouvrir le champ de recherche
             debug_print("Clic sur l'icône de recherche...", level="info")
-            search_icon = WebDriverWait(self.driver, 10).until(
+            search_icon = WebDriverWait(self.driver, GLOBAL_WAIT).until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, ".nav__search"))
             )
             search_icon.click()
             
             # Attendre que la barre de recherche soit chargée et visible
             debug_print("Attente de la barre de recherche...", level="info")
-            search_input = WebDriverWait(self.driver, 10).until(
+            search_input = WebDriverWait(self.driver, GLOBAL_WAIT).until(
                 EC.presence_of_element_located((By.ID, "search_q"))
             )
             
@@ -66,14 +216,14 @@ class PCPartPickerScraper:
             search_input.send_keys(query)
             
             # Cliquer sur le bouton recherche
-            search_button = WebDriverWait(self.driver, 10).until(
+            search_button = WebDriverWait(self.driver, GLOBAL_WAIT).until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, "form#site_search_nav button.button--primary"))
             )
             search_button.click()
             
             # Attendre que les résultats se chargent - CORRECTION ICI
             debug_print("Attente des résultats de recherche...", level="info")
-            WebDriverWait(self.driver, 10).until(
+            WebDriverWait(self.driver, GLOBAL_WAIT).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, ".search-results__pageContent"))
             )
             
@@ -89,7 +239,7 @@ class PCPartPickerScraper:
         try:
             debug_print("Tentative de gestion du popup de cookies", level="info")
             # Cibler spécifiquement le bouton "Allow" dans la popup de cookies
-            cookie_button = WebDriverWait(self.driver, 5).until(
+            cookie_button = WebDriverWait(self.driver, GLOBAL_WAIT).until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, ".cc-btn.cc-allow"))
             )
             debug_print("Bouton 'Allow' de cookies trouvé", level="debug")
@@ -151,21 +301,79 @@ class PCPartPickerScraper:
             component_url (str): L'URL du composant
             
         Returns:
-            dict: Détails du composant (prix, marchands, etc.)
+            dict: Détails du composant (prix, marchands, image, etc.)
         """
         debug_print(f"Récupération des prix depuis: {component_url}", level="fetch")
         self.driver.get(component_url)
-        time.sleep(2)
+        
+        # Augmenter le temps d'attente pour le chargement des images
+        time.sleep(3)
         
         details = {
             "price": None,
             "best_deal": None,
             "merchant_options": [],
-            "availability": None
+            "availability": None,
+            "image_url": None
         }
         
         try:
-            # Extraire les informations de prix des marchands
+            # Essayer d'extraire l'image du produit avec plusieurs méthodes
+            try:
+                # Attendre que la page soit suffisamment chargée
+                WebDriverWait(self.driver, GLOBAL_WAIT).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, ".product__image-2024 img, #pp_main_product_image, .product__image img"))
+                )
+                
+                # Essayer plusieurs sélecteurs pour l'image principale
+                for selector in ["#pp_main_product_image", ".product__image-2024 img", ".product__image img"]:
+                    try:
+                        img_element = self.driver.find_element(By.CSS_SELECTOR, selector)
+                        image_url = img_element.get_attribute("src")
+                        
+                        if image_url:
+                            # Ajouter le protocole si nécessaire
+                            if image_url.startswith("//"):
+                                image_url = "https:" + image_url
+                                
+                            details["image_url"] = image_url
+                            debug_print(f"Image trouvée avec sélecteur {selector}: {image_url}", level="success")
+                            break
+                    except:
+                        continue
+                
+                # Si aucune image n'a été trouvée, essayer les miniatures
+                if not details["image_url"]:
+                    for selector in [".product__image-2024-thumbnails img", ".product__image-2024-mobile-list img"]:
+                        try:
+                            img_elements = self.driver.find_elements(By.CSS_SELECTOR, selector)
+                            if img_elements:
+                                image_url = img_elements[0].get_attribute("src")
+                                if image_url.startswith("//"):
+                                    image_url = "https:" + image_url
+                                    
+                                details["image_url"] = image_url
+                                debug_print(f"Image miniature trouvée: {image_url}", level="success")
+                                break
+                        except:
+                            continue
+                
+                # Dernier recours: chercher n'importe quelle image pertinente
+                if not details["image_url"]:
+                    all_images = self.driver.find_elements(By.TAG_NAME, "img")
+                    for img in all_images:
+                        src = img.get_attribute("src")
+                        if src and ("product" in src.lower() or "static" in src.lower()):
+                            if src.startswith("//"):
+                                src = "https:" + src
+                            details["image_url"] = src
+                            debug_print(f"Image de secours trouvée: {src}", level="success")
+                            break
+                            
+            except Exception as e:
+                debug_print(f"Erreur lors de l'extraction de l'image: {e}", level="warning")
+            
+            # Extraire les informations de prix des marchands (code existant)
             try:
                 # Récupérer tous les marchands du tableau de prix
                 merchant_rows = self.driver.find_elements(By.CSS_SELECTOR, "#prices table tbody tr:not(.tr--noBorder)")
@@ -211,8 +419,8 @@ class PCPartPickerScraper:
         except Exception as e:
             debug_print(f"Erreur lors de l'extraction des détails du composant: {e}", level="error")
         
-        return details 
-        
+        return details
+
     def _normalize_price(self, price_text):
         """
         Normalise le format du prix de '€114.90+' vers '114,90€'
@@ -249,35 +457,36 @@ class PCPartPickerScraper:
                 
 # Exemple d'utilisation
 if __name__ == "__main__":
-    # Ce code ne s'exécute que si le fichier est lancé directement
-    debug_print("Test du scraper PCPartPicker", level="info")
+    debug_print("Création d'une configuration PC complète", level="info")
     scraper = PCPartPickerScraper()
     
     try:
-        # TESTER LA RECHERCHE
+        # Définition des composants à rechercher
+        components = {
+            "CPU": "intel i5 12400F",
+            "GPU": "nvidia rtx 3060",
+            "Carte mère": "msi b660",
+            "RAM": "corsair vengeance 16gb",
+            "SSD": "samsung 970 evo plus 1tb",
+        }
         
-        query = input("Entrez le terme de recherche (ex: 'intel i5', 'nvidia rtx 3070'): ")
-        debug_print(f"Recherche de: {query}", level="info")
-        results = scraper.search_component(query)
+        # Création de la configuration
+        config = scraper.create_configuration("PC Gamer Budget", components)
         
-        # Afficher les résultats
-        debug_print(f"Nombre de résultats: {len(results)}", level="success")
-        for i, result in enumerate(results[:5], 1):  # Afficher max 5 résultats
-            debug_print(f"Résultat {i}:", level="info")
-            debug_print(f"  Nom: {result['name']}", level="info")
-            debug_print(f"  Prix: {result['price']}", level="info")
-            debug_print(f"  Lien: {result['link']}", level="debug")
+        # Affichage du résumé
+        print("\n" + config.get_summary() + "\n")
         
-        # Tester la récupération de détails pour le premier résultat
-        if results:
-            debug_print("Récupération des détails du premier résultat...", level="fetch")
-            details = scraper.get_component_details(results[0]['link'])
-            debug_print(f"  Prix: {details['price']}", level="info")
-            debug_print("  Spécifications:", level="info")     
+        # Création du dossier data s'il n'existe pas
+        data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+        os.makedirs(data_dir, exist_ok=True)
+        
+        # Sauvegarde de la configuration avec un chemin absolu
+        json_path = os.path.join(data_dir, "pc_gamer_budget.json")
+        config.save_to_json(json_path)
+        
     except Exception as e:
-        debug_print(f"Erreur lors du test: {e}", level="error")
+        debug_print(f"Erreur lors de la création de la configuration: {e}", level="error")
     
     finally:
-        # Toujours fermer le navigateur à la fin
         scraper.close()
-        debug_print("Test terminé.", level="success")
+        debug_print("Programme terminé.", level="success")
