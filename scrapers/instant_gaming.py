@@ -95,6 +95,37 @@ class InstantGaming:
             print(f"Erreur lors de la recherche du jeu: {e}")
             return False
         
+    def filter_by_pc(self):
+        try:
+            print("Application du filtre PC...")
+            
+            # Cliquer sur le filtre Systèmes
+            wait = WebDriverWait(self.driver, 5)
+            system_filter = wait.until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, ".select2-selection.select2-selection--single"))
+            )
+            print("Filtre Systèmes trouvé, clic en cours...")
+            system_filter.click()
+            
+            # Attendre que la liste déroulante apparaisse et cliquer sur l'option PC
+            # Utilisation d'un sélecteur plus précis
+            pc_option = wait.until(
+                EC.element_to_be_clickable((By.XPATH, "//li[@role='option' and contains(text(), 'PC')]"))
+            )
+            print("Option PC trouvée, clic en cours...")
+            pc_option.click()
+            
+            print("Filtre PC appliqué avec succès")
+            
+            # Attendre que les résultats se mettent à jour
+            time.sleep(2)  # Augmentation du délai pour s'assurer que les résultats sont mis à jour
+            
+            return True
+                
+        except Exception as e:
+            print(f"Erreur lors de l'application du filtre PC: {e}")
+            return False
+        
     # Clique sur le premier résultat de la recherche
     def click_first_result(self):
         try:
@@ -271,6 +302,9 @@ if __name__ == "__main__":
         instant_gaming.accept_cookies()
         
         instant_gaming.search_game()
+        
+        # Ajouter l'appel au filtre PC ici
+        instant_gaming.filter_by_pc()
         
         instant_gaming.click_first_result()
         
