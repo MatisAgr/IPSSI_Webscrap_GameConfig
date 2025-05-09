@@ -10,6 +10,7 @@ from pathlib import Path
 import time
 import json
 import os
+import uuid
 
 # Récupère le nom du jeu vidéo (utilise une valeur par défaut pour le moment)
 def get_game_name():
@@ -216,22 +217,35 @@ class InstantGaming:
             print(f"Erreur lors de l'extraction des configurations système: {e}")
             return None
         
-    # Enregistre les configurations dans un fichier JSON
     def save_requirements_to_json(self, data):
         try:
-            game_name = data["game"].replace(":", "").replace(" ", "_").lower()
+            # Récupérer le nom du jeu et le nettoyer pour l'utiliser dans un nom de fichier
+            game_name = data["game"].replace(":", "").replace(" ", "_").replace("/", "_").lower()
+            
+            # Générer un UUID unique
+            unique_id = str(uuid.uuid4())
+            
+            # Ajouter l'UUID comme première clé du dictionnaire de données
+            # Créer un nouveau dictionnaire avec l'UUID en premier (ordre préservé depuis Python 3.7+)
+            updated_data = {
+                "uuid": unique_id,
+                **data  # Décompresse le dictionnaire existant après la première clé
+            }
+            
+            # Construire le nom du fichier avec le format: nom_du_jeu_uuid.json
+            filename_base = f"{game_name}_{unique_id}"
             
             project_root = Path(__file__).parent.parent
-            data_folder = os.path.join(project_root, "data")
+            data_folder = os.path.join(project_root, "data", "instantgaming")
             
             if not os.path.exists(data_folder):
                 os.makedirs(data_folder)
                 print(f"Dossier '{data_folder}' créé")
             
-            filename = os.path.join(data_folder, f"game_config.json")
+            filename = os.path.join(data_folder, f"{filename_base}.json")
             
             with open(filename, "w", encoding="utf-8") as json_file:
-                json.dump(data, json_file, indent=4, ensure_ascii=False)
+                json.dump(updated_data, json_file, indent=4, ensure_ascii=False)
             
             print(f"Configurations système enregistrées dans le fichier '{filename}'")
             return True
