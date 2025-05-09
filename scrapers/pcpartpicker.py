@@ -477,7 +477,7 @@ if __name__ == "__main__":
         print("\n" + config.get_summary() + "\n")
         
         # Création du dossier data s'il n'existe pas
-        data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+        data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data/pcpartpicker")
         os.makedirs(data_dir, exist_ok=True)
         
         # Sauvegarde de la configuration avec un chemin absolu
