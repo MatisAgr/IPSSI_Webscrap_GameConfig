@@ -194,7 +194,6 @@ st.markdown('<div class="main-title">🎮 GameConfig Hub</div>', unsafe_allow_ht
 st.markdown('<div class="description">Trouvez vos jeux préférés et les configurations PC recommandées</div>', unsafe_allow_html=True)
 
 # Section de création de configuration PC pour un jeu
-st.markdown('<div class="config-builder-container">', unsafe_allow_html=True)
 st.markdown("## 🔨 Créer une Configuration PC")
 st.write("Créez une configuration PC compatible avec votre jeu préféré")
 
@@ -394,7 +393,6 @@ if submit_config and game_name:
             else:
                 ig_scraper.quit()
 
-st.markdown('</div>', unsafe_allow_html=True)
 
 # Section des configurations historiques
 st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
@@ -467,14 +465,7 @@ else:
                             # Stocker la configuration sélectionnée et rediriger
                             st.session_state.selected_config = config['data']
                             st.switch_page("pages/detail_config.py")
-                    with col_btn2:
-                        if st.button(f"Mettre à jour", key=f"update_{i}"):
-                            # Stocker la configuration à mettre à jour et rediriger
-                            st.session_state.config_to_update = {
-                                'filepath': config['filepath'],
-                                'data': config['data']
-                            }
-                            st.switch_page("pages/configurations.py")
+
 
 # Footer
 st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
