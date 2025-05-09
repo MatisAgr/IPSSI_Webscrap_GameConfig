@@ -184,6 +184,74 @@ st.markdown("""
         color: #FF4B4B;
     }
 
+    .game-details-container {
+        background-color: #1E1E1E;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .game-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .game-header img {
+        width: 150px; /* Ajustez la taille selon vos besoins */
+        height: auto;
+        border-radius: 8px;
+        margin-right: 1.5rem;
+        object-fit: cover;
+    }
+
+    .game-title-price {
+        flex-grow: 1;
+    }
+
+    .game-title-price h3 {
+        color: #FF4B4B;
+        margin-bottom: 0.5rem;
+    }
+
+    .game-price {
+        font-size: 1.3rem;
+        color: #4CAF50;
+        font-weight: bold;
+    }
+
+    .specs-columns {
+        display: flex;
+        gap: 2rem;
+    }
+
+    .specs-column {
+        flex: 1;
+        background-color: #2D2D2D;
+        padding: 1rem;
+        border-radius: 8px;
+    }
+
+    .specs-column h4 {
+        color: #FF4B4B;
+        border-bottom: 2px solid #FF4B4B;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .specs-column p {
+        margin-bottom: 0.5rem;
+        line-height: 1.6;
+    }
+    .specs-column strong {
+        color: #FFFFFF;
+    }
+    .specs-column span {
+        color: #CCCCCC;
+    }
+
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -349,9 +417,7 @@ if submit_config and game_name:
                                     
                                     for category, alternatives in pc_config.alternative_components.items():
                                         st.markdown(f"<h4>Alternatives pour {category}</h4>", unsafe_allow_html=True)
-                                        
-                                        st.markdown('<div class="component-grid">', unsafe_allow_html=True)
-                                        
+                                                                                
                                         for alt in alternatives:
                                             name = alt.get('name', 'N/A')
                                             price = alt.get('price', 'N/A')
@@ -383,8 +449,6 @@ if submit_config and game_name:
                                                     {buy_button}
                                                 </div>
                                             """, unsafe_allow_html=True)
-                                        
-                                        st.markdown('</div>', unsafe_allow_html=True)
                                 
                             except Exception as e:
                                 st.error(f"Erreur lors de la création de la configuration PC: {str(e)}")
@@ -393,84 +457,3 @@ if submit_config and game_name:
             else:
                 ig_scraper.quit()
 
-
-# Section des configurations historiques
-st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
-st.markdown("## 💾 Historique des configurations")
-
-# Chemin vers le dossier data contenant les fichiers JSON
-data_dir = os.path.join(parent_dir, "data", "pcpartpicker")
-
-# Vérifier si le dossier existe
-if not os.path.exists(data_dir):
-    st.warning(f"Aucun dossier de données trouvé à l'emplacement : {data_dir}")
-    st.info("Les configurations sauvegardées apparaîtront ici après leur création.")
-else:
-    # Rechercher tous les fichiers JSON dans le dossier data
-    json_files = glob.glob(os.path.join(data_dir, "*.json"))
-    
-    if not json_files:
-        st.info("Aucune configuration sauvegardée pour le moment. Les configurations que vous créerez apparaîtront ici.")
-    else:
-        # Afficher les configurations sauvegardées
-        configs = []
-        for json_file in json_files:
-            try:
-                with open(json_file, 'r', encoding='utf-8') as f:
-                    config_data = json.load(f)
-                    configs.append({
-                        'filename': os.path.basename(json_file),
-                        'filepath': json_file,
-                        'data': config_data
-                    })
-            except Exception as e:
-                st.error(f"Erreur lors du chargement de {json_file}: {e}")
-        
-        # Diviser en deux colonnes pour afficher plus de configurations
-        col1, col2 = st.columns(2)
-        
-        # Répartir les configurations entre les deux colonnes
-        for i, config in enumerate(configs):
-            # Alterner entre les deux colonnes
-            with col1 if i % 2 == 0 else col2:
-                with st.container():
-                    st.markdown(f"""
-                    <div class="config-card">
-                        <div class="config-title">{config['data'].get('name', 'Configuration sans nom')}</div>
-                        <div class="config-price">{config['data'].get('total_price', 'Prix non disponible')}</div>
-                        <p>Composants: {len(config['data'].get('components', {}))} éléments</p>
-                    """, unsafe_allow_html=True)
-                    
-                    # Afficher quelques composants clés (max 3)
-                    key_components = ['CPU', 'GPU', 'RAM']
-                    components = config['data'].get('components', {})
-                    
-                    for key in key_components:
-                        if key in components:
-                            component = components[key]
-                            name = component.get('name', 'N/A')
-                            price = component.get('price', 'N/A')
-                            st.markdown(f"""
-                            <div class="component-row">
-                                <strong>{key}:</strong> {name} - {price}
-                            </div>
-                            """, unsafe_allow_html=True)
-                    
-                    st.markdown("</div>", unsafe_allow_html=True)
-                    
-                    # Boutons d'action
-                    col_btn1, col_btn2 = st.columns(2)
-                    with col_btn1:
-                        if st.button(f"Voir détails", key=f"view_{i}"):
-                            # Stocker la configuration sélectionnée et rediriger
-                            st.session_state.selected_config = config['data']
-                            st.switch_page("pages/detail_config.py")
-
-
-# Footer
-st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
-st.markdown("""
-<div style="text-align: center; color: #888;">
-    <p>Les données sont collectées depuis InstantGaming et PCPartPicker</p>
-</div>
-""", unsafe_allow_html=True)
