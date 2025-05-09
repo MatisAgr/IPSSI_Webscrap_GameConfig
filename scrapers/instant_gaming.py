@@ -72,6 +72,7 @@ class InstantGaming:
         try:
             print(f"Recherche du jeu: {self.game_name}")
             
+            # Partie recherche
             wait = WebDriverWait(self.driver, 5)
             search_icon = wait.until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, ".icon-search-input"))
@@ -90,17 +91,10 @@ class InstantGaming:
             
             time.sleep(0.5)
             
-            return True
-        except Exception as e:
-            print(f"Erreur lors de la recherche du jeu: {e}")
-            return False
-        
-    def filter_by_pc(self):
-        try:
+            # Partie filtrage PC
             print("Application du filtre PC...")
             
             # Cliquer sur le filtre Systèmes
-            wait = WebDriverWait(self.driver, 5)
             system_filter = wait.until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, ".select2-selection.select2-selection--single"))
             )
@@ -108,7 +102,6 @@ class InstantGaming:
             system_filter.click()
             
             # Attendre que la liste déroulante apparaisse et cliquer sur l'option PC
-            # Utilisation d'un sélecteur plus précis
             pc_option = wait.until(
                 EC.element_to_be_clickable((By.XPATH, "//li[@role='option' and contains(text(), 'PC')]"))
             )
@@ -118,12 +111,11 @@ class InstantGaming:
             print("Filtre PC appliqué avec succès")
             
             # Attendre que les résultats se mettent à jour
-            time.sleep(2)  # Augmentation du délai pour s'assurer que les résultats sont mis à jour
+            time.sleep(2)
             
             return True
-                
         except Exception as e:
-            print(f"Erreur lors de l'application du filtre PC: {e}")
+            print(f"Erreur lors de la recherche ou du filtrage: {e}")
             return False
         
     # Clique sur le premier résultat de la recherche
@@ -301,10 +293,8 @@ if __name__ == "__main__":
         
         instant_gaming.accept_cookies()
         
+        # Recherche et filtre dans une seule fonction
         instant_gaming.search_game()
-        
-        # Ajouter l'appel au filtre PC ici
-        instant_gaming.filter_by_pc()
         
         instant_gaming.click_first_result()
         
