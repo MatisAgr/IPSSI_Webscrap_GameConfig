@@ -14,7 +14,7 @@ import uuid
 
 # Récupère le nom du jeu vidéo (utilise une valeur par défaut pour le moment)
 def get_game_name():
-    game_name = "GTA 5" 
+    game_name = "expedition 33" 
     print("\n" + "="*50)
     print("RECHERCHE DE JEU VIDÉO")
     print("="*50)
@@ -72,6 +72,7 @@ class InstantGaming:
         try:
             print(f"Recherche du jeu: {self.game_name}")
             
+            # Partie recherche
             wait = WebDriverWait(self.driver, 5)
             search_icon = wait.until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, ".icon-search-input"))
@@ -90,17 +91,10 @@ class InstantGaming:
             
             time.sleep(0.5)
             
-            return True
-        except Exception as e:
-            print(f"Erreur lors de la recherche du jeu: {e}")
-            return False
-        
-    def filter_by_pc(self):
-        try:
+            # Partie filtrage PC
             print("Application du filtre PC...")
             
             # Cliquer sur le filtre Systèmes
-            wait = WebDriverWait(self.driver, 5)
             system_filter = wait.until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, ".select2-selection.select2-selection--single"))
             )
@@ -108,7 +102,6 @@ class InstantGaming:
             system_filter.click()
             
             # Attendre que la liste déroulante apparaisse et cliquer sur l'option PC
-            # Utilisation d'un sélecteur plus précis
             pc_option = wait.until(
                 EC.element_to_be_clickable((By.XPATH, "//li[@role='option' and contains(text(), 'PC')]"))
             )
@@ -118,12 +111,11 @@ class InstantGaming:
             print("Filtre PC appliqué avec succès")
             
             # Attendre que les résultats se mettent à jour
-            time.sleep(2)  # Augmentation du délai pour s'assurer que les résultats sont mis à jour
+            time.sleep(2)
             
             return True
-                
         except Exception as e:
-            print(f"Erreur lors de l'application du filtre PC: {e}")
+            print(f"Erreur lors de la recherche ou du filtrage: {e}")
             return False
         
     # Clique sur le premier résultat de la recherche
@@ -189,6 +181,19 @@ class InstantGaming:
             
             special_fields = ["OS", "Processor", "Memory", "Graphics", "Storage", "Sound Card"]
             
+            # Fonction pour vérifier si une valeur contient des alternatives
+            def has_alternatives(value):
+                return "|" in value or "/" in value
+            
+            # Fonction pour extraire les alternatives
+            def extract_alternatives(value):
+                # Si les deux séparateurs sont présents, privilégier le |
+                if "|" in value:
+                    return [opt.strip() for opt in value.split("|")]
+                elif "/" in value:
+                    return [opt.strip() for opt in value.split("/")]
+                return [value]
+            
             minimal_section = specs_container.find_element(By.CSS_SELECTOR, ".minimal")
             minimal_items = minimal_section.find_elements(By.CSS_SELECTOR, "ul.specs li")
             
@@ -200,11 +205,12 @@ class InstantGaming:
                     key = key.strip()
                     value = value.strip()
                     
-                    if key in special_fields and "|" in value:
-                        options = [opt.strip() for opt in value.split("|")]
+                    if key in special_fields and has_alternatives(value):
+                        options = extract_alternatives(value)
                         minimal_specs[key] = {
                             "1": options[0],
-                            "2": options[1] if len(options) > 1 else ""
+                            "2": options[1] if len(options) > 1 else "",
+                            "3": options[2] if len(options) > 2 else ""
                         }
                     else:
                         minimal_specs[key] = value
@@ -220,8 +226,8 @@ class InstantGaming:
                     key = key.strip()
                     value = value.strip()
                     
-                    if key in special_fields and "|" in value:
-                        options = [opt.strip() for opt in value.split("|")]
+                    if key in special_fields and has_alternatives(value):
+                        options = extract_alternatives(value)
                         recommended_specs[key] = {
                             "option1": options[0],
                             "option2": options[1] if len(options) > 1 else ""
@@ -301,10 +307,8 @@ if __name__ == "__main__":
         
         instant_gaming.accept_cookies()
         
+        # Recherche et filtre dans une seule fonction
         instant_gaming.search_game()
-        
-        # Ajouter l'appel au filtre PC ici
-        instant_gaming.filter_by_pc()
         
         instant_gaming.click_first_result()
         
