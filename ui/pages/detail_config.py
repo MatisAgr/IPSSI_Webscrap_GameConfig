@@ -79,7 +79,7 @@ if 'selected_config' not in st.session_state:
     st.error("Aucune configuration sélectionnée. Veuillez aller à la page historique.")
     
     if st.button("Historique"):
-        st.switch_page("historique.py")
+        st.switch_page("./pages/historique.py")
 else:
     # Récupérer la configuration sélectionnée
     config = st.session_state.selected_config
