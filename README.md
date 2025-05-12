@@ -12,6 +12,10 @@ Tisma : [![wakatime](https://wakatime.com/badge/user/a16f794f-b91d-4818-8dfc-d76
 
 GameConfig Hub est une application web conçue pour aider les joueurs à trouver et à créer des configurations PC optimisées pour leurs jeux préférés. L'application récupère les informations sur les jeux et leurs configurations système requises (minimale et recommandée) depuis Instant Gaming, puis recherche les composants correspondants sur PCPartPicker pour estimer un coût et proposer des options.
 
+
+https://github.com/user-attachments/assets/015f5eb3-ce16-4677-987a-f0dd4314877b
+
+
 > [!NOTE]
 > Une tentative d'amélioration de la précision de la recherche de composants sur PCPartPicker en naviguant directement vers les catégories spécifiques (ex: `/cpu/`, `/video-card/`) puis en utilisant le filtre de la page catégorie a été implémentée. Cependant, cette méthode a conduit à des bannissements d'IP par le site. Par conséquent, le scraper utilise une méthode de recherche plus générale pour éviter ce problème, ce qui peut parfois entraîner des résultats moins précis pour certains composants.
 
