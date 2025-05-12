@@ -187,8 +187,18 @@ class InstantGaming:
             
             # Fonction pour extraire les alternatives
             def extract_alternatives(value):
-                # Si les deux séparateurs sont présents, privilégier le |
-                if "|" in value:
+                # Traiter tous les types de séparateurs
+                if "|" in value and "/" in value:
+                    # Si les deux séparateurs sont présents
+                    # D'abord splitter par |
+                    parts = []
+                    for part in value.split("|"):
+                        if "/" in part:
+                            parts.extend(p.strip() for p in part.split("/"))
+                        else:
+                            parts.append(part.strip())
+                    return parts
+                elif "|" in value:
                     return [opt.strip() for opt in value.split("|")]
                 elif "/" in value:
                     return [opt.strip() for opt in value.split("/")]
@@ -207,11 +217,10 @@ class InstantGaming:
                     
                     if key in special_fields and has_alternatives(value):
                         options = extract_alternatives(value)
-                        minimal_specs[key] = {
-                            "1": options[0],
-                            "2": options[1] if len(options) > 1 else "",
-                            "3": options[2] if len(options) > 2 else ""
-                        }
+                        options_dict = {}
+                        for i, opt in enumerate(options, 1):
+                            options_dict[str(i)] = opt
+                        minimal_specs[key] = options_dict
                     else:
                         minimal_specs[key] = value
             
@@ -228,10 +237,10 @@ class InstantGaming:
                     
                     if key in special_fields and has_alternatives(value):
                         options = extract_alternatives(value)
-                        recommended_specs[key] = {
-                            "option1": options[0],
-                            "option2": options[1] if len(options) > 1 else ""
-                        }
+                        options_dict = {}
+                        for i, opt in enumerate(options, 1):
+                            options_dict[str(i)] = opt
+                        recommended_specs[key] = options_dict
                     else:
                         recommended_specs[key] = value
             
