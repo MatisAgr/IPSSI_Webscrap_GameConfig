@@ -76,7 +76,7 @@ st.markdown("""
 
 # Vérifier si une configuration est sélectionnée
 if 'selected_config' not in st.session_state:
-    st.error("Aucune configuration sélectionnée. Veuillez retourner à la page d'accueil.")
+    st.error("Aucune configuration sélectionnée. Veuillez aller à la page historique.")
     
     if st.button("Retour à l'accueil"):
         st.switch_page("app.py")
