@@ -177,8 +177,8 @@ class InstantGaming:
             def clean_hardware_spec(key, value):
                 # Dictionnaire de termes à supprimer par type de composant
                 terms_to_remove = {
-                    "Graphics": ["NVIDIA", "GeForce", "AMD", "Radeon", "Intel"],
-                    "Processor": ["Intel", "AMD", "Core", "Ryzen"]
+                    "Graphics": ["NVIDIA", "GeForce", "AMD", "Radeon", "Intel", "(4GB VRAM)", "(8GB VRAM)", "(16GB VRAM)", "(32GB VRAM)" ],
+                    "Processor": ["Intel", "AMD", "Core"]
                     # Ajouter d'autres types de composants au besoin
                 }
                 
@@ -191,6 +191,13 @@ class InstantGaming:
                     value = " ".join(value.split())  # Nettoyer les espaces excédentaires
                     if original_value != value:
                         print(f"Nettoyé: '{original_value}' -> '{value}'")
+                
+                # Ajouter "DDR 4" uniquement aux spécifications de mémoire
+                if key == "Memory":
+                    original_value = value
+                    value = f"{value} DDR 4 DDR 5".strip()
+                    print(f"Mémoire modifiée: '{original_value}' -> '{value}'")
+                
                 return value
             
             # Récupération des spécifications techniques
