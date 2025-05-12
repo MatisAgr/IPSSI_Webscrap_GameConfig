@@ -1,4 +1,12 @@
+<div align="center">
+   
 # GameConfig Hub
+   
+Tisma : [![wakatime](https://wakatime.com/badge/user/a16f794f-b91d-4818-8dfc-d768ce605ece/project/3065f372-fd39-450c-a413-16c785a3e1cd.svg)](https://wakatime.com/badge/user/a16f794f-b91d-4818-8dfc-d768ce605ece/project/3065f372-fd39-450c-a413-16c785a3e1cd)
+
+</div>
+
+
 
 ## Description
 
