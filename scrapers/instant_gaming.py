@@ -177,7 +177,7 @@ class InstantGaming:
             def clean_hardware_spec(key, value):
                 # Dictionnaire de termes à supprimer par type de composant
                 terms_to_remove = {
-                    "Graphics": ["NVIDIA", "GeForce", "AMD", "Radeon", "Intel", "(4GB VRAM)", "(8GB VRAM)", "(16GB VRAM)", "(32GB VRAM)" ],
+                    "Graphics": ["NVIDIA", "GeForce", "AMD", "Radeon", "Intel", "(512MB VRAM)", "(1GB VRAM)", "(2GB VRAM)", "(4GB VRAM)", "(8GB VRAM)", "(16GB VRAM)", "(32GB VRAM)" ],
                     "Processor": ["Intel", "AMD", "Core"]
                     # Ajouter d'autres types de composants au besoin
                 }
