@@ -4,7 +4,7 @@
 
 GameConfig Hub est une application web conçue pour aider les joueurs à trouver et à créer des configurations PC optimisées pour leurs jeux préférés. L'application récupère les informations sur les jeux et leurs configurations système requises (minimale et recommandée) depuis Instant Gaming, puis recherche les composants correspondants sur PCPartPicker pour estimer un coût et proposer des options.
 
-> **[NOTE]**
+> [!NOTE]
 > Une tentative d'amélioration de la précision de la recherche de composants sur PCPartPicker en naviguant directement vers les catégories spécifiques (ex: `/cpu/`, `/video-card/`) puis en utilisant le filtre de la page catégorie a été implémentée. Cependant, cette méthode a conduit à des bannissements d'IP par le site. Par conséquent, le scraper utilise une méthode de recherche plus générale pour éviter ce problème, ce qui peut parfois entraîner des résultats moins précis pour certains composants.
 
 
@@ -45,24 +45,11 @@ Le projet est organisé comme suit :
 
 1.  **Clonez le dépôt** (si ce n'est pas déjà fait) :
     ```bash
-    git clone <url_du_depot>
+    git clone https://github.com/MatisAgr/IPSSI_Webscrap_GameConfig.git
     cd IPSSI_Webscrap_GameConfig
     ```
 
-2.  **Créez un environnement virtuel** (recommandé) :
-    ```bash
-    python -m venv venv
-    ```
-    Sous Windows :
-    ```bash
-    venv\Scripts\activate
-    ```
-    Sous macOS/Linux :
-    ```bash
-    source venv/bin/activate
-    ```
-
-3.  **Installez les dépendances** :
+2.  **Installez les dépendances** :
     ```bash
     pip install -r requirements.txt
     ```
