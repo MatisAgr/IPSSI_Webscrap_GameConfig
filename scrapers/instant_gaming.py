@@ -14,7 +14,7 @@ import uuid
 
 # Récupère le nom du jeu vidéo (utilise une valeur par défaut pour le moment)
 def get_game_name():
-    game_name = "expedition 33" 
+    game_name = "GTA 5" 
     print("\n" + "="*50)
     print("RECHERCHE DE JEU VIDÉO")
     print("="*50)
@@ -173,6 +173,26 @@ class InstantGaming:
                 print(f"Impossible de récupérer le prix du jeu: {e}")
                 price = ""
             
+            # Fonction pour nettoyer les spécifications hardware
+            def clean_hardware_spec(key, value):
+                # Dictionnaire de termes à supprimer par type de composant
+                terms_to_remove = {
+                    "Graphics": ["NVIDIA", "GeForce", "AMD", "Radeon", "Intel"],
+                    "Processor": ["Intel", "AMD", "Core", "Ryzen"]
+                    # Ajouter d'autres types de composants au besoin
+                }
+                
+                # Si le type de composant a des termes à supprimer
+                if key in terms_to_remove:
+                    original_value = value
+                    for term in terms_to_remove[key]:
+                        # Supprimer le terme uniquement s'il est un mot complet (éviter les sous-chaînes)
+                        value = value.replace(f"{term} ", "").replace(f" {term}", "").replace(f"{term}", "")
+                    value = " ".join(value.split())  # Nettoyer les espaces excédentaires
+                    if original_value != value:
+                        print(f"Nettoyé: '{original_value}' -> '{value}'")
+                return value
+            
             # Récupération des spécifications techniques
             wait = WebDriverWait(self.driver, 10)
             specs_container = wait.until(
@@ -187,8 +207,16 @@ class InstantGaming:
             
             # Fonction pour extraire les alternatives
             def extract_alternatives(value):
-                # Si les deux séparateurs sont présents, privilégier le |
-                if "|" in value:
+                # Traiter tous les types de séparateurs
+                if "|" in value and "/" in value:
+                    parts = []
+                    for part in value.split("|"):
+                        if "/" in part:
+                            parts.extend(p.strip() for p in part.split("/"))
+                        else:
+                            parts.append(part.strip())
+                    return parts
+                elif "|" in value:
                     return [opt.strip() for opt in value.split("|")]
                 elif "/" in value:
                     return [opt.strip() for opt in value.split("/")]
@@ -207,13 +235,15 @@ class InstantGaming:
                     
                     if key in special_fields and has_alternatives(value):
                         options = extract_alternatives(value)
-                        minimal_specs[key] = {
-                            "1": options[0],
-                            "2": options[1] if len(options) > 1 else "",
-                            "3": options[2] if len(options) > 2 else ""
-                        }
+                        options_dict = {}
+                        for i, opt in enumerate(options, 1):
+                            # Nettoyer chaque option avant de l'ajouter
+                            clean_opt = clean_hardware_spec(key, opt)
+                            options_dict[str(i)] = clean_opt
+                        minimal_specs[key] = options_dict
                     else:
-                        minimal_specs[key] = value
+                        # Nettoyer également les valeurs non alternatives
+                        minimal_specs[key] = clean_hardware_spec(key, value)
             
             recommended_section = specs_container.find_element(By.CSS_SELECTOR, ".recommended")
             recommended_items = recommended_section.find_elements(By.CSS_SELECTOR, "ul.specs li")
@@ -228,12 +258,15 @@ class InstantGaming:
                     
                     if key in special_fields and has_alternatives(value):
                         options = extract_alternatives(value)
-                        recommended_specs[key] = {
-                            "option1": options[0],
-                            "option2": options[1] if len(options) > 1 else ""
-                        }
+                        options_dict = {}
+                        for i, opt in enumerate(options, 1):
+                            # Nettoyer chaque option avant de l'ajouter
+                            clean_opt = clean_hardware_spec(key, opt)
+                            options_dict[str(i)] = clean_opt
+                        recommended_specs[key] = options_dict
                     else:
-                        recommended_specs[key] = value
+                        # Nettoyer également les valeurs non alternatives
+                        recommended_specs[key] = clean_hardware_spec(key, value)
             
             game_title = self.driver.title.split("-")[0].strip()
             system_requirements = {
