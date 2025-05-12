@@ -3,7 +3,6 @@ import os
 
 if __name__ == "__main__":
     # Chemin vers le script app.py de Streamlit
-    # Assurez-vous que ce chemin est correct par rapport à l'emplacement de main.py
     streamlit_app_path = os.path.join(os.path.dirname(__file__), "ui", "app.py")
 
     # Commande pour lancer Streamlit
