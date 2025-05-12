@@ -183,7 +183,21 @@ class InstantGaming:
                     # ...autres types de composants au besoin
                 }
                 
-                # Si le type de composant a des termes à supprimer
+                # Si c'est de la mémoire, traitement spécial
+                if key == "Memory":
+                    # Traitement spécial pour la mémoire - extraire juste le nombre
+                    import re
+                    # Chercher tous les nombres dans la valeur
+                    numbers = re.findall(r'\d+', value)
+                    if numbers:
+                        # Prendre le premier nombre trouvé
+                        memory_value = numbers[0]
+                        # Retourner simplement la valeur numérique avec DDR
+                        cleaned_value = f"{memory_value} DDR".strip()
+                        print(f"Mémoire spéciale: '{value}' -> '{cleaned_value}'")
+                        return cleaned_value
+                
+                # Pour les autres types de composants
                 if key in terms_to_remove:
                     original_value = value
                     for term in terms_to_remove[key]:
@@ -193,8 +207,8 @@ class InstantGaming:
                     if original_value != value:
                         print(f"Nettoyé: '{original_value}' -> '{value}'")
                 
-                # Ajouter "DDR" uniquement aux spécifications de mémoire
-                if key == "Memory":
+                # Ajouter "DDR" uniquement aux spécifications de mémoire (cas où la méthode spéciale n'a pas été utilisée)
+                if key == "Memory" and "DDR" not in value:
                     original_value = value
                     value = f"{value} DDR".strip()
                     print(f"Mémoire modifiée: '{original_value}' -> '{value}'")
