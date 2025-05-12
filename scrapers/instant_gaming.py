@@ -192,10 +192,10 @@ class InstantGaming:
                     if original_value != value:
                         print(f"Nettoyé: '{original_value}' -> '{value}'")
                 
-                # Ajouter "DDR 4" uniquement aux spécifications de mémoire
+                # Ajouter "DDR" uniquement aux spécifications de mémoire
                 if key == "Memory":
                     original_value = value
-                    value = f"{value} DDR4 DDR5".strip()
+                    value = f"{value} DDR".strip()
                     print(f"Mémoire modifiée: '{original_value}' -> '{value}'")
                 
                 return value
@@ -210,24 +210,33 @@ class InstantGaming:
             
             # Fonction pour vérifier si une valeur contient des alternatives
             def has_alternatives(value):
-                return "|" in value or "/" in value
+                return "|" in value or "/" in value or " or " in value or " ou " in value
             
             # Fonction pour extraire les alternatives
             def extract_alternatives(value):
-                # Traiter tous les types de séparateurs
-                if "|" in value and "/" in value:
-                    parts = []
-                    for part in value.split("|"):
-                        if "/" in part:
-                            parts.extend(p.strip() for p in part.split("/"))
+                result = [value]
+                
+                # Traiter chaque type de séparateur l'un après l'autre
+                # Pour éviter les interactions complexes entre différents séparateurs
+                for separator in ["|", "/", " or ", " ou "]:
+                    new_result = []
+                    for item in result:
+                        if separator in item:
+                            parts = item.split(separator)
+                            new_result.extend([part.strip() for part in parts if part.strip()])
                         else:
-                            parts.append(part.strip())
-                    return parts
-                elif "|" in value:
-                    return [opt.strip() for opt in value.split("|")]
-                elif "/" in value:
-                    return [opt.strip() for opt in value.split("/")]
-                return [value]
+                            new_result.append(item)
+                    result = new_result
+                
+                # Éliminer les doublons tout en préservant l'ordre
+                seen = set()
+                unique_result = []
+                for item in result:
+                    if item not in seen:
+                        seen.add(item)
+                        unique_result.append(item)
+                
+                return unique_result
             
             minimal_section = specs_container.find_element(By.CSS_SELECTOR, ".minimal")
             minimal_items = minimal_section.find_elements(By.CSS_SELECTOR, "ul.specs li")
