@@ -179,8 +179,8 @@ class InstantGaming:
                 terms_to_remove = {
                     "Graphics": ["NVIDIA", "GeForce", "AMD", "Radeon", "Intel", "512MB VRAM", "1GB VRAM", "2GB VRAM", "4GB VRAM", "8GB VRAM", "16GB VRAM", "32GB VRAM", "(", ")", "VRAM", "12 GB", "10 GB", "16 GB", "20 GB", "24 GB", "8 GB", "4 GB", "2 GB", "1 GB", "512 MB", "6 GB", "3 GB"],
                     "Processor": ["Intel", "AMD", "Core"],
-                    "RAM": ["RAM", "GB", "MB"],
-                    # Ajouter d'autres types de composants au besoin
+                    "Memory": ["RAM", "GB", "MB"],
+                    # ...autres types de composants au besoin
                 }
                 
                 # Si le type de composant a des termes à supprimer
